@@ -7,6 +7,8 @@
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 
+![首页截图](docs/screenshots/home.png)
+
 造物工坊是一个 **AI 生成式 3D 建模产品**:输入文字描述或照片,系统自动调研外观、澄清细节、生成参数化建模代码,输出工业通用的 **STEP / STL** 文件,并提供在线三维预览、参数微调与自然语言修改。
 
 **定位:** 零件级生成式设计工具 —— 让 CAD 里的第一个小时,变成一分钟。
