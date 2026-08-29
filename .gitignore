@@ -1,0 +1,45 @@
+# 环境与密钥
+.env
+deploy_key/
+
+# 本地运行数据与生成物
+jobs/
+proto_out/
+backups/
+web_uploads/
+video_out/
+demo/
+my-projects/
+billing_store.json
+users_store.json
+orders_store.json
+feedback_store.json
+
+# 视频录制与演示素材(含演示账号 token 与录屏)
+video/
+
+# 打包产物
+zaowu-deploy.zip
+text-to-cad.zip
+
+# 第三方依赖目录(本地开发用,按 README 安装)
+text-to-cad/
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 临时截图与抓取文件
+*.png
+zhihu_page.html
+
+# 历史部署脚本(早期版本含硬编码凭据,已被 redeploy2.py 替代)
+redeploy_fix.py
+deploy_remote.py
+
+# redesign 目录只保留前端构建源,运维一次性脚本不提交
+redesign/*
+!redesign/part1.html
+!redesign/extra.js
+!redesign/build.py
+!redesign/make_og.py

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>造物工坊 · 管理后台</title>
+<style>
+  :root { --bg:#0f1115; --panel:#171a21; --line:#2a2f3a; --text:#e8eaed; --muted:#9aa0a6; --accent:#4f8cff; --ok:#34c759; --err:#ff5f56; --warn:#ffb340; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,"Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); }
+  .wrap { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:12px; margin-bottom:20px; }
+  .login-box { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:28px; max-width:360px; margin:80px auto; }
+  .login-box h2 { margin:0 0 16px; font-size:16px; }
+  input[type=password], input[type=text] { width:100%; background:#0b0d11; border:1px solid var(--line); border-radius:8px; color:var(--text); padding:10px; font-size:14px; }
+  button { background:var(--accent); border:none; color:#fff; padding:9px 18px; border-radius:8px; font-size:14px; cursor:pointer; }
+  button.mini { padding:5px 12px; font-size:12px; background:#242a36; }
+  .cards { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:18px; }
+  @media (max-width:860px){ .cards { grid-template-columns:repeat(2,1fr); } }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .card .n { font-size:22px; font-weight:700; margin-top:4px; }
+  .card .l { color:var(--muted); font-size:12px; }
+  .card.warn .n { color:var(--err); }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  section h2 { font-size:15px; margin:0 0 12px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:500; }
+  .bar-row { display:flex; align-items:center; gap:10px; margin:6px 0; font-size:12px; }
+  .bar-row .d { width:90px; color:var(--muted); }
+  .bar { flex:1; height:14px; background:#0b0d11; border-radius:6px; overflow:hidden; }
+  .bar i { display:block; height:100%; background:linear-gradient(90deg,var(--accent),#8ab4ff); }
+  .bar-row .v { width:200px; color:var(--muted); }
+  .err { color:var(--err); }
+  .ok { color:var(--ok); }
+  .muted { color:var(--muted); }
+  #loginError { color:var(--err); font-size:12px; margin-top:10px; min-height:16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="loginBox" class="login-box">
+    <h2>🔐 管理后台登录</h2>
+    <input type="password" id="pw" placeholder="管理员密码">
+    <div style="margin-top:12px;text-align:right;"><button id="loginGo">登录</button></div>
+    <div id="loginError"></div>
+  </div>
+
+  <div id="dash" style="display:none;">
+    <h1>📊 造物工坊 · 管理后台</h1>
+    <div class="sub" id="dashSub">数据实时读取本地账单与订单</div>
+    <div style="margin-bottom:16px;">
+      <button class="mini" id="refreshBtn">刷新</button>
+      <button class="mini" id="logoutBtn">退出登录</button>
+    </div>
+
+    <div class="cards">
+      <div class="card"><div class="l">注册用户</div><div class="n" id="cUsers">-</div></div>
+      <div class="card"><div class="l">今日 token 消耗</div><div class="n" id="cTokens">-</div></div>
+      <div class="card"><div class="l">今日积分消耗</div><div class="n" id="cPoints">-</div></div>
+      <div class="card"><div class="l">真实收款(积分)</div><div class="n" id="cRevenue">-</div></div>
+      <div class="card warn"><div class="l">欠费用户</div><div class="n" id="cDebtors">-</div></div>
+      <div class="card warn"><div class="l">欠费总额(积分)</div><div class="n" id="cDebtTotal">-</div></div>
+      <div class="card"><div class="l">订单(已付/未付/全部)</div><div class="n" id="cOrders">-</div></div>
+      <div class="card"><div class="l">正在运行的任务</div><div class="n" id="cJobs">-</div></div>
+    </div>
+
+    <section>
+      <h2>🚨 欠费用户</h2>
+      <table><thead><tr><th>用户</th><th>欠款(积分)</th><th>余额</th><th>累计消费</th><th>累计充值</th></tr></thead>
+      <tbody id="debtTable"><tr><td colspan="5" class="muted">(无)</td></tr></tbody></table>
+    </section>
+
+    <section>
+      <h2>👥 用户列表(按累计消费排序)</h2>
+      <table><thead><tr><th>用户</th><th>余额</th><th>欠款</th><th>累计消费</th><th>累计充值</th></tr></thead>
+      <tbody id="userTable"></tbody></table>
+    </section>
+
+    <section>
+      <h2>📈 每日 token / 积分消耗(近 14 天)</h2>
+      <div id="usageBox"></div>
+    </section>
+
+    <section>
+      <h2>🩺 站点健康(每 60 秒自动刷新)</h2>
+      <div style="display:flex;gap:22px;flex-wrap:wrap;font-size:13px;">
+        <span>网站状态:<b class="ok" id="hHttp">-</b></span>
+        <span>运行时长:<b id="hUptime">-</b></span>
+        <span>磁盘剩余:<b id="hDisk">-</b></span>
+        <span>内存可用:<b id="hMem">-</b></span>
+        <span>运行中任务:<b id="hJobs">-</b></span>
+      </div>
+    </section>
+
+    <section>
+      <h2>⚙️ 最近生成任务</h2>
+      <table><thead><tr><th>时间</th><th>用户</th><th>名称</th><th>状态</th><th>阶段</th><th>tokens</th><th>约积分</th></tr></thead>
+      <tbody id="jobTable"><tr><td colspan="7" class="muted">(暂无任务)</td></tr></tbody></table>
+    </section>
+
+    <section>
+      <h2>💬 用户反馈</h2>
+      <table><thead><tr><th>时间</th><th>用户</th><th>内容</th></tr></thead>
+      <tbody id="fbTable"><tr><td colspan="3" class="muted">(暂无反馈)</td></tr></tbody></table>
+    </section>
+
+    <section>
+      <h2>🎁 给用户补积分</h2>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:12px;color:var(--muted);margin:0;">用户(邀请码或手机号)</label>
+        <input type="text" id="grantUser" style="width:220px;" placeholder="如 u_xxxx 或 13800000000">
+        <label style="font-size:12px;color:var(--muted);margin:0;">积分</label>
+        <input type="text" id="grantPoints" style="width:80px;" value="50">
+        <button id="grantGo">补积分</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>🔑 内测邀请码</h2>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        <label style="font-size:12px;color:var(--muted);margin:0;">生成数量</label>
+        <input type="text" id="invCount" value="5" style="width:60px;">
+        <label style="font-size:12px;color:var(--muted);margin:0;">每码额度(积分)</label>
+        <input type="text" id="invQuota" value="50" style="width:60px;">
+        <button id="invGen">生成邀请码</button>
+      </div>
+      <div class="muted" style="font-size:12px;margin-bottom:8px;">未使用的邀请码可以直接改额度:在表格里改数字点「保存」</div>
+      <div id="invNew" style="margin-bottom:10px;"></div>
+      <table><thead><tr><th>邀请码</th><th>额度(积分)</th><th>状态</th><th>使用者</th><th>使用时间</th></tr></thead>
+      <tbody id="invTable"><tr><td colspan="5" class="muted">(暂无)</td></tr></tbody></table>
+    </section>
+
+    <section>
+      <h2>🧾 最近充值订单</h2>
+      <table><thead><tr><th>订单号</th><th>用户</th><th>金额(元)</th><th>积分</th><th>状态</th><th>网关</th><th>时间</th></tr></thead>
+      <tbody id="orderTable"><tr><td colspan="7" class="muted">(无订单)</td></tr></tbody></table>
+    </section>
+  </div>
+</div>
+
+<script>
+let adminToken = localStorage.getItem('zw_admin_token') || '';
+function H() { return adminToken ? {'Authorization':'Bearer '+adminToken} : {}; }
+
+function showLogin() { document.getElementById('loginBox').style.display='block'; document.getElementById('dash').style.display='none'; }
+function showDash() { document.getElementById('loginBox').style.display='none'; document.getElementById('dash').style.display='block'; loadAll(); }
+
+document.getElementById('loginGo').addEventListener('click', async () => {
+  const pw = document.getElementById('pw').value;
+  const err = document.getElementById('loginError');
+  err.textContent = '';
+  try {
+    const r = await fetch('/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: pw}) });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    adminToken = d.token;
+    localStorage.setItem('zw_admin_token', adminToken);
+    showDash();
+  } catch (e) { err.textContent = '登录失败: ' + e.message; }
+});
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  adminToken = ''; localStorage.removeItem('zw_admin_token'); showLogin();
+});
+document.getElementById('refreshBtn').addEventListener('click', loadAll);
+
+async function loadInvites() {
+  const d = await (await fetch('/api/admin/invites', {headers:H()})).json();
+  const invs = d.invites || [];
+  document.getElementById('invTable').innerHTML = invs.length
+    ? invs.map(x => {
+        if (x.status === 'unused') {
+          const st = '<span class="ok">未使用</span>';
+          const quota = `<input type="text" value="${x.quota}" data-code="${x.code}" style="width:56px;background:#0b0d11;border:1px solid var(--line);border-radius:6px;color:var(--text);padding:3px 6px;font-size:12px;"> <button class="saveQuota" data-code="${x.code}" class="mini">保存</button>`;
+          return `<tr><td>${x.code}</td><td>${quota}</td><td>${st}</td><td>-</td><td class="muted">-</td></tr>`;
+        }
+        return `<tr><td>${x.code}</td><td>${x.quota}</td><td><span class="muted">已使用</span></td><td>${x.used_by || '-'}</td><td class="muted">${x.used_at || '-'}</td></tr>`;
+      }).join('')
+    : '<tr><td colspan="5" class="muted">(暂无,点上方生成)</td></tr>';
+}
+
+document.getElementById('invTable').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.saveQuota');
+  if (!btn) return;
+  const code = btn.dataset.code;
+  const input = document.querySelector(`input[data-code="${code}"]`);
+  const quota = parseInt(input.value) || 0;
+  if (quota <= 0) { alert('额度必须大于 0'); return; }
+  const r = await fetch('/api/admin/invites/set_quota', { method:'POST', headers: Object.assign({'Content-Type':'application/json'}, H()), body: JSON.stringify({code, quota}) });
+  const d = await r.json();
+  if (d.error) { alert(d.error); return; }
+  alert('已保存:' + code + ' 额度 ' + quota + ' 积分');
+  loadInvites();
+});
+
+async function loadHealth() {
+  try {
+    const d = await (await fetch('/api/admin/health', {headers:H()})).json();
+    document.getElementById('hHttp').textContent = d.http === 'ok' ? '正常 ✅' : d.http;
+    const up = d.uptime_sec || 0;
+    const days = Math.floor(up / 86400), hrs = Math.floor((up % 86400) / 3600), mins = Math.floor((up % 3600) / 60);
+    document.getElementById('hUptime').textContent = `${days}天${hrs}小时${mins}分`;
+    document.getElementById('hDisk').textContent = (d.disk_free / 1024 ** 3).toFixed(1) + ' GB / ' + (d.disk_total / 1024 ** 3).toFixed(0) + ' GB';
+    document.getElementById('hMem').textContent = (d.mem_available / 1024 ** 3).toFixed(2) + ' GB / ' + (d.mem_total / 1024 ** 3).toFixed(1) + ' GB';
+    document.getElementById('hJobs').textContent = d.running_jobs;
+  } catch (e) {}
+}
+
+async function loadJobs() {
+  try {
+    const d = await (await fetch('/api/admin/jobs', {headers:H()})).json();
+    const jobs = d.jobs || [];
+    document.getElementById('jobTable').innerHTML = jobs.length
+      ? jobs.map(x => {
+          const st = x.status === 'done' ? '<span class="ok">完成</span>' : x.status === 'error' ? '<span class="err">失败</span>' : x.status === 'running' ? '<span style="color:var(--warn);">运行中</span>' : '<span class="muted">'+x.status+'</span>';
+          return `<tr><td class="muted">${x.at || '-'}</td><td>${x.user_id || '-'}</td><td>${x.name || '-'}</td><td>${st}</td><td class="muted">${x.stage || ''}</td><td>${x.tokens}</td><td>${x.points}</td></tr>`;
+        }).join('')
+      : '<tr><td colspan="7" class="muted">(暂无任务)</td></tr>';
+  } catch (e) {}
+}
+
+document.getElementById('invGen').addEventListener('click', async () => {
+  const count = parseInt(document.getElementById('invCount').value) || 5;
+  const quota = parseInt(document.getElementById('invQuota').value) || 50;
+  const r = await fetch('/api/admin/invites/create', { method:'POST', headers: Object.assign({'Content-Type':'application/json'}, H()), body: JSON.stringify({count, quota}) });
+  const d = await r.json();
+  if (d.error) { alert(d.error); return; }
+  document.getElementById('invNew').innerHTML = '<b>新生成的邀请码(复制发给内测用户):</b> ' + (d.codes || []).join('、');
+  loadInvites();
+});
+
+async function loadAll() {
+  const ov = await fetch('/api/admin/overview', {headers:H()});
+  if (ov.status === 401) { showLogin(); return; }
+  const o = await ov.json();
+  document.getElementById('cUsers').textContent = o.users_count;
+  document.getElementById('cTokens').textContent = o.today_tokens;
+  document.getElementById('cPoints').textContent = o.today_points;
+  document.getElementById('cRevenue').textContent = o.revenue_points;
+  document.getElementById('cDebtors').textContent = o.debtors_count;
+  document.getElementById('cDebtTotal').textContent = o.debt_total;
+  document.getElementById('cOrders').textContent = o.orders_paid + ' / ' + o.orders_pending + ' / ' + o.orders_total;
+  document.getElementById('cJobs').textContent = o.running_jobs;
+  document.getElementById('dashSub').textContent = '上次刷新: ' + new Date().toLocaleString('zh-CN');
+
+  const u = await (await fetch('/api/admin/users', {headers:H()})).json();
+  const debtors = (u.users||[]).filter(x => x.debt > 0);
+  document.getElementById('debtTable').innerHTML = debtors.length
+    ? debtors.map(x => `<tr><td>${x.user_id}</td><td class="err">${x.debt}</td><td class="err">${x.balance}</td><td>${x.spent}</td><td>${x.recharged}</td></tr>`).join('')
+    : '<tr><td colspan="5" class="muted">(无欠费用户 🎉)</td></tr>';
+  document.getElementById('userTable').innerHTML = (u.users||[]).slice(0, 50).map(x =>
+    `<tr><td>${x.user_id}</td><td>${x.balance}</td><td>${x.debt > 0 ? '<span class="err">'+x.debt+'</span>' : 0}</td><td>${x.spent}</td><td>${x.recharged}</td></tr>`).join('');
+
+  const ug = await (await fetch('/api/admin/usage?days=14', {headers:H()})).json();
+  const rows = Object.entries(ug.usage || {});
+  const maxT = Math.max(1, ...rows.map(([,v]) => v.tokens));
+  document.getElementById('usageBox').innerHTML = rows.map(([d, v]) =>
+    `<div class="bar-row"><span class="d">${d}</span><div class="bar"><i style="width:${Math.round(v.tokens/maxT*100)}%"></i></div><span class="v">${v.tokens} tokens · ${v.points} 积分</span></div>`).join('')
+    || '<span class="muted">(暂无用量数据)</span>';
+
+  const od = await (await fetch('/api/admin/orders?limit=50', {headers:H()})).json();
+  const orders = od.orders || [];
+  document.getElementById('orderTable').innerHTML = orders.length
+    ? orders.map(x => {
+        const st = x.status === 'paid' ? '<span class="ok">已支付</span>' : x.status === 'pending' ? '<span class="err">待支付</span>' : '<span class="muted">'+x.status+'</span>';
+        const t = x.paid_at ? new Date(x.paid_at*1000).toLocaleString('zh-CN') : '-';
+        return `<tr><td class="muted">${x.order_no}</td><td>${x.user_id}</td><td>${x.amount}</td><td>${x.points}</td><td>${st}</td><td>${x.gateway}</td><td class="muted">${t}</td></tr>`;
+      }).join('')
+    : '<tr><td colspan="7" class="muted">(无订单)</td></tr>';
+
+  loadInvites();
+  loadHealth();
+  loadJobs();
+  loadFeedback();
+}
+
+async function loadFeedback() {
+  try {
+    const d = await (await fetch('/api/admin/feedback', {headers:H()})).json();
+    const fb = d.feedback || [];
+    document.getElementById('fbTable').innerHTML = fb.length
+      ? fb.map(x => `<tr><td class="muted">${x.at || '-'}</td><td>${x.user_id || '-'}</td><td>${x.text}</td></tr>`).join('')
+      : '<tr><td colspan="3" class="muted">(暂无反馈)</td></tr>';
+  } catch (e) {}
+}
+
+document.getElementById('grantGo').addEventListener('click', async () => {
+  const user_id = document.getElementById('grantUser').value.trim();
+  const points = parseFloat(document.getElementById('grantPoints').value);
+  if (!user_id || !points || points <= 0) { alert('请填写用户和正数积分'); return; }
+  const r = await fetch('/api/admin/grant', { method:'POST', headers: Object.assign({'Content-Type':'application/json'}, H()), body: JSON.stringify({user_id, points}) });
+  const d = await r.json();
+  if (d.error) { alert(d.error); return; }
+  alert('已补 ' + points + ' 积分,该用户余额: ' + d.balance);
+  loadAll();
+});
+
+setInterval(loadHealth, 60000);
+
+adminToken ? showDash() : showLogin();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+flask>=3.0
+requests>=2.31
+pillow>=10.0
+qrcode>=8.0
+cryptography>=42.0
+build123d==0.11.1
+cadquery-ocp==7.9.3
+playwright==1.62
+cadgen==0.4.9

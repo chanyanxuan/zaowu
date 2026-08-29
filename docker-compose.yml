@@ -1,0 +1,25 @@
+# 造物工坊 生产部署(应用 + nginx 反代)
+# 使用: 填好 .env 后执行  docker compose up -d --build
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - zw_data:/viewer/data   # 数据目录放在预览器根内,路径全链路一致
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/www:/var/www/certbot:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+
+volumes:
+  zw_data:

@@ -1,0 +1,53 @@
+[
+  {
+    "id": "bosl2_spur_gear",
+    "name": "直齿轮(BOSL2)",
+    "category": "打印件",
+    "desc": "BOSL2 标准渐开线直齿轮,可带中心轴孔",
+    "source": "BelfrySCAD/BOSL2 · gears.scad",
+    "params": [
+      {"key": "mod", "label": "模数", "default": 2, "min": 0.5, "max": 6, "step": 0.25, "unit": "mm"},
+      {"key": "teeth", "label": "齿数", "default": 30, "min": 8, "max": 100, "step": 1, "unit": ""},
+      {"key": "thick", "label": "齿宽", "default": 10, "min": 2, "max": 60, "step": 1, "unit": "mm"},
+      {"key": "bore", "label": "中心孔径", "default": 6, "min": 0, "max": 60, "step": 0.5, "unit": "mm"}
+    ],
+    "template": "include <BOSL2/std.scad>\ninclude <BOSL2/gears.scad>\nspur_gear(mod={MOD}, teeth={TEETH}, thickness={THICK}, pressure_angle=20, shaft_diam={BORE});\n"
+  },
+  {
+    "id": "bosl2_threaded_rod",
+    "name": "螺纹杆(BOSL2)",
+    "category": "打印件",
+    "desc": "BOSL2 真实牙型三角螺纹杆",
+    "source": "BelfrySCAD/BOSL2 · screws.scad",
+    "params": [
+      {"key": "d", "label": "公称直径", "default": 10, "min": 4, "max": 40, "step": 0.5, "unit": "mm"},
+      {"key": "l", "label": "长度", "default": 40, "min": 10, "max": 200, "step": 1, "unit": "mm"},
+      {"key": "pitch", "label": "螺距", "default": 1.5, "min": 0.5, "max": 6, "step": 0.25, "unit": "mm"}
+    ],
+    "template": "include <BOSL2/std.scad>\ninclude <BOSL2/screws.scad>\nthreaded_rod(d={D}, l={L}, pitch={PITCH}, internal=false);\n"
+  },
+  {
+    "id": "dotscad_crystal_ball",
+    "name": "晶格球(dotSCAD)",
+    "category": "打印件",
+    "desc": "球面晶格镂空球,打印装饰/灯罩用",
+    "source": "JustinSDK/dotSCAD · crystal_ball.scad",
+    "params": [
+      {"key": "r", "label": "半径", "default": 30, "min": 10, "max": 80, "step": 1, "unit": "mm"},
+      {"key": "t", "label": "筋厚", "default": 2, "min": 1, "max": 8, "step": 0.5, "unit": "mm"}
+    ],
+    "template": "include <dotSCAD/src/crystal_ball.scad>\ncrystal_ball(radius={R}, thickness={T});\n"
+  },
+  {
+    "id": "gridfinity_base",
+    "name": "Gridfinity 底座",
+    "category": "打印件",
+    "desc": "模块化收纳底座板,可拼合扩展",
+    "source": "kennetek/gridfinity-rebuilt-openscad",
+    "params": [
+      {"key": "gx", "label": "横向格数", "default": 3, "min": 1, "max": 12, "step": 1, "unit": ""},
+      {"key": "gy", "label": "纵向格数", "default": 3, "min": 1, "max": 12, "step": 1, "unit": ""}
+    ],
+    "template": "include <gridfinity-rebuilt-openscad/src/core/base.scad>\ngridfinityBase([{GX}, {GY}]);\n"
+  }
+]
