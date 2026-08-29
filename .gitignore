@@ -31,6 +31,7 @@ __pycache__/
 
 # 临时截图与抓取文件
 *.png
+!docs/screenshots/*.png
 zhihu_page.html
 
 # 历史部署脚本(早期版本含硬编码凭据,已被 redeploy2.py 替代)
